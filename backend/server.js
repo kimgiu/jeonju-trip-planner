@@ -1,21 +1,14 @@
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-require('dotenv').config();
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 10000;
 
-app.use(cors());
-app.use(bodyParser.json());
-
-app.post('/api/generate', async (req, res) => {
-    const itinerary = {
-        message: "전주 여행 일정 예시입니다.",
-        input: req.body.input
-    };
-    res.json(itinerary);
+// 예시 루트 라우트 추가
+app.get('/', (req, res) => {
+  res.send('서버가 정상 작동 중입니다!');
 });
 
+// 기존 라우트들 추가...
+
 app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });

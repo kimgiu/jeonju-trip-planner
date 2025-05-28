@@ -1,69 +1,34 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './App.css';
+import PlanTable from './components/PlanTable';
 
 function App() {
-  const [date, setDate] = useState('');
-  const [interests, setInterests] = useState('');
-  const [language, setLanguage] = useState('ÇÑ±¹¾î');
-  const [plan, setPlan] = useState('');
+  const [plan, setPlan] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleGeneratePlan = async () => {
+  const handleGenerate = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('https://jeonju-trip-planner.onrender.com/api/generate-plan', {
-        date,
-        interests,
-        language,
+      const response = await axios.post('https://jeonju-trip-planner.onrender.com/api/generate', {
+        startDate: '2025-06-01',
+        endDate: '2025-06-03',
+        language: 'ko'
       });
       setPlan(response.data.plan);
     } catch (error) {
-      console.error('API È£Ãâ ½ÇÆĞ', error);
-      setPlan('ÀÏÁ¤ »ı¼º¿¡ ½ÇÆĞÇß½À´Ï´Ù.');
+      console.error('Error fetching trip plan:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="App">
-      <h1>ÀüÁÖ ¿©Çà ÀÏÁ¤ »ı¼º±â</h1>
-      
-      <div>
-        <label>¿©Çà ³¯Â¥:</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label>°ü½É»ç:</label>
-        <input
-          type="text"
-          value={interests}
-          onChange={(e) => setInterests(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label>¾ğ¾î ¼±ÅÃ:</label>
-        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="ÇÑ±¹¾î">ÇÑ±¹¾î</option>
-          <option value="English">English</option>
-        </select>
-      </div>
-
-      <button onClick={handleGeneratePlan} disabled={loading}>
-        {loading ? 'ÀÏÁ¤ »ı¼º Áß...' : 'ÀÏÁ¤ »ı¼ºÇÏ±â'}
+    <div style={{ padding: '20px' }}>
+      <h1>ì „ì£¼ ì—¬í–‰ ì¼ì • ìƒì„±ê¸°</h1>
+      <button onClick={handleGenerate} disabled={loading}>
+        {loading ? 'ìƒì„± ì¤‘...' : 'ì—¬í–‰ ì¼ì • ìƒì„±í•˜ê¸°'}
       </button>
-
-      <div>
-        <h3>¿©Çà ÀÏÁ¤:</h3>
-        <pre>{plan}</pre>
-      </div>
+      <PlanTable plan={plan} />
     </div>
   );
 }

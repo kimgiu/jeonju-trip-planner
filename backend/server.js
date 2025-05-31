@@ -5,7 +5,7 @@ require('dotenv').config();
 const app = express();
 
 // 배포된 프론트 엔드 도메인(https)으로 바꿔야 합니다.
-app.use(cors({ origin: 'https://jeonju-backend.onrender.com' }));
+app.use(cors({ origin: 'https://jeonju-trip-planner.onrender.com/' }));
 
 app.use(express.json());
 

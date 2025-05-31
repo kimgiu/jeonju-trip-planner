@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>나홀로 떠나는 전주여행</title>
 
-  <!-- TailwindCSS (CDN) 예시 -->
+  <!-- TailwindCSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- 1) Leaflet CSS (integrity 제거) -->
+  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -17,67 +17,83 @@
   />
 
   <style>
-    /* 페이지 전체를 100% 높이로 사용하기 위해 body/html에 높이 지정 */
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
     }
-    /* 지도가 삽입될 div 높이 지정 (예: 전체 높이의 50%를 지도에 배정) */
     #map {
-      height: 400px; /* 필요에 따라 높이 조정 */
+      height: 500px;
       width: 100%;
       margin-top: 1rem;
+      display: none; /* 초기에는 숨김 */
     }
   </style>
 </head>
 <body class="bg-gray-100">
 
-  <!-- 상단 헤더 -->
-  <header class="bg-white shadow-md py-4 mb-6">
-    <div class="container mx-auto px-4 text-center">
-      <h1 class="text-3xl font-bold text-green-600">나홀로 떠나는 전주여행</h1>
-    </div>
+  <!-- 헤더 -->
+  <header class="bg-green-600 text-white py-4 mb-6">
+    <h1 class="text-center text-3xl font-bold">나홀로 떠나는 전주여행</h1>
   </header>
 
   <main class="container mx-auto px-4">
-    <!-- 언어 선택 및 버튼 -->
-    <section class="bg-white p-6 rounded-lg shadow mb-6">
+    <!-- 일정 생성 폼 -->
+    <section class="bg-white p-6 rounded-lg shadow mb-8">
       <h2 class="text-xl font-semibold mb-4">나만의 전주여행 일정 만들기</h2>
-
-      <label for="languageSelect" class="block mb-2">언어 선택:</label>
-      <select id="languageSelect" class="border border-gray-300 rounded px-3 py-2 mb-4 w-full max-w-xs">
-        <option value="ko">한국어</option>
-        <option value="en">영어</option>
-      </select>
-
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <!-- 시작 날짜 -->
+        <div>
+          <label for="startDate" class="block mb-2">여행 시작일:</label>
+          <input id="startDate" type="date"
+                 class="w-full border border-gray-300 rounded px-3 py-2" />
+        </div>
+        <!-- 종료 날짜 -->
+        <div>
+          <label for="endDate" class="block mb-2">여행 종료일:</label>
+          <input id="endDate" type="date"
+                 class="w-full border border-gray-300 rounded px-3 py-2" />
+        </div>
+        <!-- 여행 기간(일수) (자동 계산, 표시용, 편집 불가) -->
+        <div>
+          <label for="numDays" class="block mb-2">여행 일수:</label>
+          <input id="numDays" type="number" min="1" readonly
+                 class="w-full border border-gray-300 bg-gray-100 rounded px-3 py-2" />
+        </div>
+        <!-- 언어 선택 -->
+        <div>
+          <label for="languageSelect" class="block mb-2">언어 선택:</label>
+          <select id="languageSelect"
+                  class="w-full border border-gray-300 rounded px-3 py-2">
+            <option value="ko">한국어</option>
+            <option value="en">영어</option>
+          </select>
+        </div>
+      </div>
       <button
         id="generateBtn"
-        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded w-full max-w-xs"
+        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded"
       >
         여행 일정 생성하기
       </button>
     </section>
 
-    <!-- 결과 영역: 초기에 hidden 상태 -->
-    <section id="itineraryResult" class="hidden bg-white p-6 rounded-lg shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">생성된 일정</h2>
-      <div id="itineraryContent" class="prose text-gray-800 whitespace-pre-wrap">
-        <!-- 버튼 클릭 시 일정 텍스트가 여기에 들어옵니다. -->
-      </div>
-
-      <!-- 지도 영역: 버튼 클릭 후에 보여집니다 -->
-      <div id="map" class="mt-6"></div>
+    <!-- 일정 표 및 지도 영역 -->
+    <section id="itinerarySection" class="hidden bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">생성된 일정 (표 및 지도)</h2>
+      <!-- 표 표시 -->
+      <div id="itineraryTableContainer" class="overflow-x-auto mb-6"></div>
+      <!-- 지도 표시 -->
+      <div id="map"></div>
     </section>
 
-    <!-- 추천 여행지/후기/기타 컨텐츠 (블로그 형식) -->
-    <section class="bg-white p-6 rounded-lg shadow mb-6">
+    <!-- 추천 여행지 카드 -->
+    <section class="bg-white p-6 rounded-lg shadow mb-8">
       <h2 class="text-xl font-semibold mb-4">추천 여행지</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- 예시 카드 3개 -->
         <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
           <img
-            src="https://via.placeholder.com/400x240?text=한옥마을"
+            src="https://via.placeholder.com/400x240?text=전주+한옥마을"
             alt="전주 한옥마을"
             class="w-full h-48 object-cover"
           />
@@ -86,7 +102,6 @@
             <p class="text-gray-600 mt-2">조선시대 전통 가옥이 모여있는 대표 관광지</p>
           </div>
         </div>
-
         <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
           <img
             src="https://via.placeholder.com/400x240?text=전동성당"
@@ -98,7 +113,6 @@
             <p class="text-gray-600 mt-2">고딕 양식의 아름다운 성당, 야경이 유명</p>
           </div>
         </div>
-
         <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
           <img
             src="https://via.placeholder.com/400x240?text=남부시장"
@@ -114,89 +128,240 @@
     </section>
   </main>
 
-  <!-- 2) Leaflet JS (integrity 제거, defer 사용) -->
+  <!-- Leaflet JS -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     crossorigin=""
     defer
   ></script>
 
-  <!-- 3) 사용자 스크립트: API 호출 및 지도 표시 -->
+  <!-- 메인 스크립트 -->
   <script defer>
     document.addEventListener('DOMContentLoaded', () => {
-      // (1) 백엔드 도메인(배포된 URL) / 로컬 테스트 도메인
       const BACKEND_URL = 'https://jeonju-backend.onrender.com';
 
-      // (2) Leaflet 지도 초기화
-      let map = L.map('map').setView([35.8180, 127.1470], 14);
+      // 1) 여행 일수 자동 계산
+      const startInput = document.getElementById('startDate');
+      const endInput = document.getElementById('endDate');
+      const daysInput = document.getElementById('numDays');
+
+      function updateNumDays() {
+        const start = new Date(startInput.value);
+        const end = new Date(endInput.value);
+        if (startInput.value && endInput.value && end >= start) {
+          const diffTime = end.getTime() - start.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          daysInput.value = diffDays;
+        } else {
+          daysInput.value = '';
+        }
+      }
+
+      startInput.addEventListener('change', updateNumDays);
+      endInput.addEventListener('change', updateNumDays);
+
+      // 2) 지도 초기화 (hidden 상태이므로 어떤 시점에 .style.display = 'block' 처리함)
+      let map;
+      function initMap() {
+        map = L.map('map').setView([35.8180, 127.1470], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+      }
+      initMap();
+
+      // 3) 버튼 클릭 이벤트: 백엔드 호출 및 일정, 지도 렌더링
+      document.getElementById('generateBtn').addEventListener('click', async () => {
+        const startDate = startInput.value;
+        const endDate = endInput.value;
+        const numDays = parseInt(daysInput.value);
+        const language = document.getElementById('languageSelect').value;
+        const section = document.getElementById('itinerarySection');
+        const tableContainer = document.getElementById('itineraryTableContainer');
+
+        if (!startDate || !endDate || !numDays) {
+          alert('시작일과 종료일을 올바르게 입력해주세요.');
+          return;
+        }
+
+        // 섹션 보여주기
+        section.classList.remove('hidden');
+        tableContainer.innerHTML = '<p class="text-gray-700">여행 일정을 생성 중입니다...</p>';
+        document.getElementById('map').style.display = 'none';
+
+        try {
+          // 백엔드로 startDate, days를 보냄
+          const res = await fetch(`${BACKEND_URL}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ startDate, days: numDays, language })
+          });
+          if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+          const { plan } = await res.json();
+          // plan: [{date, slots:[{time,location,restaurant,lodging}]}...]
+
+          // 표 렌더
+          renderItineraryTable(plan);
+
+          // 지도에 경로 표시
+          plotAllDaysOnMap(plan);
+        } catch (err) {
+          tableContainer.innerHTML = `<p class="text-red-600">일정 생성에 실패했습니다: ${err.message}</p>`;
+          console.error(err);
+        }
+      });
+
+      // 4) 일정 배열을 받아 HTML table 생성
+      function renderItineraryTable(planArray) {
+        const container = document.getElementById('itineraryTableContainer');
+        container.innerHTML = '';
+        const table = document.createElement('table');
+        table.className = 'min-w-full bg-white border border-gray-200';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr class="bg-green-100 text-gray-700">
+            <th class="border px-4 py-2">날짜</th>
+            <th class="border px-4 py-2">시간</th>
+            <th class="border px-4 py-2">여행지</th>
+            <th class="border px-4 py-2">음식점</th>
+            <th class="border px-4 py-2">숙소(저가/중가/고가)</th>
+          </tr>`;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        planArray.forEach(day => {
+          const date = day.date;
+          day.slots.forEach(slot => {
+            const tr = document.createElement('tr');
+            tr.className = 'text-center text-gray-800';
+
+            // 날짜
+            const tdDate = document.createElement('td');
+            tdDate.className = 'border px-4 py-2';
+            tdDate.textContent = date;
+            tr.appendChild(tdDate);
+
+            // 시간
+            const tdTime = document.createElement('td');
+            tdTime.className = 'border px-4 py-2';
+            tdTime.textContent = slot.time;
+            tr.appendChild(tdTime);
+
+            // 여행지
+            const tdLocation = document.createElement('td');
+            tdLocation.className = 'border px-4 py-2';
+            tdLocation.textContent = slot.location;
+            tr.appendChild(tdLocation);
+
+            // 음식점
+            const tdRestaurant = document.createElement('td');
+            tdRestaurant.className = 'border px-4 py-2 text-left';
+            if (slot.restaurant) {
+              const r = slot.restaurant;
+              tdRestaurant.innerHTML = `
+                <p class="font-semibold">${r.name}</p>
+                <p class="text-sm">메뉴: ${r.menu} / 가격: ${r.price}</p>
+                <p class="text-sm">주소: ${r.address}</p>
+                <p class="text-sm">전화: ${r.phone}</p>
+              `;
+            } else {
+              tdRestaurant.textContent = '-';
+            }
+            tr.appendChild(tdRestaurant);
+
+            // 숙소
+            const tdLodging = document.createElement('td');
+            tdLodging.className = 'border px-4 py-2 text-left';
+            if (slot.lodging) {
+              const l = slot.lodging;
+              tdLodging.innerHTML = `
+                <div class="space-y-1">
+                  <div>
+                    <span class="font-semibold text-sm">[저가] ${l.budget.name}</span>
+                    <span class="text-sm">(${l.budget.price})</span>
+                    <p class="text-xs">주소: ${l.budget.address}</p>
+                    <p class="text-xs">전화: ${l.budget.phone}</p>
+                  </div>
+                  <div>
+                    <span class="font-semibold text-sm">[중가] ${l.midrange.name}</span>
+                    <span class="text-sm">(${l.midrange.price})</span>
+                    <p class="text-xs">주소: ${l.midrange.address}</p>
+                    <p class="text-xs">전화: ${l.midrange.phone}</p>
+                  </div>
+                  <div>
+                    <span class="font-semibold text-sm">[고가] ${l.premium.name}</span>
+                    <span class="text-sm">(${l.premium.price})</span>
+                    <p class="text-xs">주소: ${l.premium.address}</p>
+                    <p class="text-xs">전화: ${l.premium.phone}</p>
+                  </div>
+                </div>`;
+            } else {
+              tdLodging.textContent = '-';
+            }
+            tr.appendChild(tdLodging);
+
+            tbody.appendChild(tr);
+          });
+        });
+
+        table.appendChild(tbody);
+        container.appendChild(table);
+      }
+
+      // 5) 지도에 여러 날의 경로를 서로 다른 색으로 표시
+      function plotAllDaysOnMap(planArray) {
+        // 지도가 숨김 상태였으면 보여주기
+        const mapDiv = document.getElementById('map');
+        if (mapDiv.style.display === 'none') {
+          mapDiv.style.display = 'block';
+          setTimeout(() => map.invalidateSize(), 200);
+        }
+
+        // 이전에 그린 레이어 모두 제거
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+            map.removeLayer(layer);
+          }
+        });
+
+        // 색상 배열 (Day1: 파랑, Day2: 빨강, Day3: 녹색, ...)
+        const colors = ['blue', 'red', 'green', 'purple', 'orange', 'brown', 'cyan'];
+
+        planArray.forEach((day, dayIndex) => {
+          // 예시: 위치별 하드코딩 좌표 (추후 Geocoding으로 대체)
+          const coords = day.slots.map(slot => {
+            switch (slot.location) {
+              case '전주 한옥마을': return [35.8190, 127.1480];
+              case '전동성당': return [35.8152, 127.1470];
+              case '남부시장': return [35.8155, 127.1447];
+              case '전주 국립박물관': return [35.8195, 127.1460];
+              case '경기전': return [35.8158, 127.1475];
+              case '오목대': return [35.8150, 127.1485];
+              default: return [35.8180, 127.1470];
+            }
+          });
+
+          // 각 지점에 마커와 팝업 표시
+          coords.forEach((c, idx) => {
+            L.marker(c)
+              .addTo(map)
+              .bindPopup(`${day.date} Day${dayIndex + 1}: ${day.slots[idx].location}`);
+          });
+
+          // 폴리라인으로 경로 연결
+          L.polyline(coords, {
+            color: colors[dayIndex % colors.length],
+            weight: 4
+          }).addTo(map);
+        });
+      }
+
+      // Leaflet 지도 초기화 전용 (페이지 로드 시 한번 실행됨)
+      map = L.map('map').setView([35.8180, 127.1470], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
-
-      // (3) 경로(마커 + 폴리라인) 그려주는 함수
-      function plotRoute(coordsArray) {
-        coordsArray.forEach((coord, idx) => {
-          const marker = L.marker(coord).addTo(map);
-          marker.bindPopup(`경유 ${idx + 1}`);
-        });
-        L.polyline(coordsArray, { color: 'blue', weight: 4 }).addTo(map);
-      }
-
-      // (4) 버튼 클릭 시 백엔드 /api/generate 호출
-      const btn = document.getElementById('generateBtn');
-      btn.addEventListener('click', async () => {
-        const resultSection = document.getElementById('itineraryResult');
-        const contentDiv = document.getElementById('itineraryContent');
-        // 결과 영역 보여주기
-        resultSection.classList.remove('hidden');
-        contentDiv.innerHTML = '<p class="text-gray-700">여행 일정을 생성 중입니다...</p>';
-
-        try {
-          // (A) 언어 선택값 가져오기
-          const lang = document.getElementById('languageSelect').value;
-
-          // (B) 백엔드로 POST 요청
-          const res = await fetch(`${BACKEND_URL}/api/generate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              startDate: new Date().toISOString().split('T')[0], // 예시로 오늘 날짜 사용
-              days: 3,
-              language: lang
-            })
-          });
-
-          if (!res.ok) {
-            throw new Error(`백엔드 오류: ${res.status} ${res.statusText}`);
-          }
-
-          const json = await res.json();
-          const planText = json.plan || '';
-
-          // (C) 일정 텍스트 화면에 출력
-          contentDiv.innerHTML = '<pre class="whitespace-pre-wrap">' + planText + '</pre>';
-
-          // (D) (테스트용) 샘플 좌표로 지도에 경로 그리기
-          //    실제 배포 시에는 GPT 응답에서 장소 이름만 가져와서 Geocoding API(예: Nominatim)로 위도/경도 얻는 로직을 추가해야 합니다.
-          const sampleCoords = [
-            [35.8190, 127.1480], // 한옥마을 대략 좌표
-            [35.8152, 127.1470], // 전동성당 대략 좌표
-            [35.8155, 127.1447]  // 남부시장 대략 좌표
-          ];
-          plotRoute(sampleCoords);
-
-          // 지도가 hidden 상태에서 보이는 상태로 바뀌면, 사이즈를 재계산해야 올바르게 표시됩니다.
-          setTimeout(() => {
-            map.invalidateSize();
-          }, 200);
-
-        } catch (err) {
-          console.error(err);
-          contentDiv.innerHTML = `<p class="text-red-600">일정 생성에 실패했습니다: ${err.message}</p>`;
-        }
-      });
     });
   </script>
 </body>

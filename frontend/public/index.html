@@ -1,26 +1,316 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>전주 GPT 여행 플래너</title>
-  </head>
-  <body>
-    <h1>전주 여행 일정 생성</h1>
-    <form>
-      <label for="start">여행 시작일:</label>
-      <input type="date" id="start" name="start" />
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나홀로 떠나는 전주여행 (테이블형 일정)</title>
 
-      <label for="days">여행 일수:</label>
-      <input type="number" id="days" name="days" min="1" />
+  <!-- TailwindCSS (CDN) 간단 예시 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Optional: 지도 표시(Leaflet) 용 CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
 
-      <label for="lang">언어 선택:</label>
-      <select id="lang" name="lang">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 400px;
+      width: 100%;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <header class="bg-green-600 text-white py-4 mb-8">
+    <h1 class="text-center text-3xl font-bold">나홀로 떠나는 전주여행</h1>
+  </header>
+
+  <main class="container mx-auto px-4">
+    <!-- 언어 선택 + 버튼 -->
+    <section class="bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">나만의 전주여행 일정 만들기</h2>
+      <label for="languageSelect" class="block mb-2">언어 선택:</label>
+      <select id="languageSelect" class="border border-gray-300 rounded px-3 py-2 mb-4 w-full max-w-xs">
         <option value="ko">한국어</option>
         <option value="en">영어</option>
       </select>
+      <br />
+      <button
+        id="generateBtn"
+        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded"
+      >
+        여행 일정 생성하기
+      </button>
+    </section>
 
-      <button type="submit">일정 생성하기</button>
-    </form>
-  </body>
+    <!-- (A) 일정 데이터가 로드되면 여기에 <table>로 표시 -->
+    <section id="tableSection" class="hidden bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">생성된 일정 (표로 보기)</h2>
+      <!-- 동적으로 채워질 HTML 테이블이 여기에 삽입됩니다 -->
+      <div id="itineraryTableContainer" class="overflow-x-auto"></div>
+    </section>
+
+    <!-- (B) 지도를 표시할 때 사용할 div (선택항목) -->
+    <div id="map" class="hidden"></div>
+
+    <!-- (C) 추천 여행지 카드(블로그 형식) -->
+    <section class="bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">추천 여행지</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+          <img
+            src="https://via.placeholder.com/400x240?text=전주+한옥마을"
+            alt="전주 한옥마을"
+            class="w-full h-48 object-cover"
+          />
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">전주 한옥마을</h3>
+            <p class="text-gray-600 mt-2">조선시대 전통 가옥이 모여있는 대표 관광지</p>
+          </div>
+        </div>
+        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+          <img
+            src="https://via.placeholder.com/400x240?text=전동성당"
+            alt="전동성당"
+            class="w-full h-48 object-cover"
+          />
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">전동성당</h3>
+            <p class="text-gray-600 mt-2">고딕 양식의 아름다운 성당, 야경이 유명</p>
+          </div>
+        </div>
+        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
+          <img
+            src="https://via.placeholder.com/400x240?text=남부시장"
+            alt="남부시장"
+            class="w-full h-48 object-cover"
+          />
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">남부시장</h3>
+            <p class="text-gray-600 mt-2">전북 대표 재래시장, 다양한 전통 먹거리</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Leaflet JS (지도 기능용, 필요 없으면 삭제해도 됩니다) -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+    defer
+  ></script>
+
+  <!-- 메인 스크립트 -->
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ----------------------------------------------------------------------
+      // 1. 백엔드 도메인 설정 (Render 배포 URL)
+      // ----------------------------------------------------------------------
+      const BACKEND_URL = 'https://jeonju-backend.onrender.com'; // 자신의 백엔드 도메인으로 변경
+
+      // ----------------------------------------------------------------------
+      // 2. 버튼 클릭 이벤트: 백엔드 /api/generate 호출 및 JSON 파싱 → 표 생성
+      // ----------------------------------------------------------------------
+      const generateBtn = document.getElementById('generateBtn');
+      generateBtn.addEventListener('click', async () => {
+        // (A) 언어 선택값 가져오기
+        const language = document.getElementById('languageSelect').value;
+
+        // (B) 버튼 클릭 시, “로딩 중” 메시지 토글
+        generateBtn.disabled = true;
+        generateBtn.textContent = '일정 생성 중...';
+
+        try {
+          // (C) 백엔드 호출: POST /api/generate
+          const res = await fetch(`${BACKEND_URL}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              startDate: new Date().toISOString().split('T')[0], // 예시: 오늘 날짜
+              days: 3,
+              language: language
+            })
+          });
+          if (!res.ok) {
+            throw new Error(`서버 오류: ${res.status} ${res.statusText}`);
+          }
+          const json = await res.json();
+
+          // (D) JSON 안에 plan 배열(날짜별 일정)이 들어왔다고 가정
+          const planData = json.plan; 
+          if (!Array.isArray(planData) || planData.length === 0) {
+            throw new Error('유효한 일정 데이터가 없습니다.');
+          }
+
+          // (E) “표(Table)” HTML 생성 함수 호출
+          renderItineraryTable(planData);
+
+          // (F) 지도 표시가 필요하면, 아래 예시대로 지도를 보이게 하고 경로를 그릴 수 있습니다.
+          renderMapWithSampleCoordinates();
+
+        } catch (err) {
+          alert(`일정 생성에 실패했습니다: ${err.message}`);
+          console.error(err);
+        } finally {
+          generateBtn.disabled = false;
+          generateBtn.textContent = '여행 일정 생성하기';
+        }
+      });
+
+      // ----------------------------------------------------------------------
+      // 3. 일정 데이터를 받아서 <table> 형태로 렌더링하는 함수
+      // ----------------------------------------------------------------------
+      function renderItineraryTable(planArray) {
+        const section = document.getElementById('tableSection');
+        const container = document.getElementById('itineraryTableContainer');
+        section.classList.remove('hidden');
+
+        // 테이블 생성
+        const table = document.createElement('table');
+        table.className = 'min-w-full bg-white border border-gray-200';
+
+        // 테이블 헤더
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr class="bg-green-100 text-gray-700">
+            <th class="border px-4 py-2">날짜</th>
+            <th class="border px-4 py-2">시간</th>
+            <th class="border px-4 py-2">여행지</th>
+            <th class="border px-4 py-2">음식점 (이름/메뉴/가격/전화/주소)</th>
+            <th class="border px-4 py-2">숙소 (저가/중가/고가)</th>
+          </tr>`;
+        table.appendChild(thead);
+
+        // 테이블 바디
+        const tbody = document.createElement('tbody');
+
+        planArray.forEach(dayObj => {
+          const date = dayObj.date;       // "2025-06-01" 등
+          const slots = dayObj.slots;     // 배열: [{time, location, restaurant, lodging}, ...]
+
+          slots.forEach(slot => {
+            const tr = document.createElement('tr');
+            tr.className = 'text-center text-gray-800';
+
+            // 1) 날짜
+            const tdDate = document.createElement('td');
+            tdDate.className = 'border px-4 py-2';
+            tdDate.textContent = date;
+            tr.appendChild(tdDate);
+
+            // 2) 시간
+            const tdTime = document.createElement('td');
+            tdTime.className = 'border px-4 py-2';
+            tdTime.textContent = slot.time;
+            tr.appendChild(tdTime);
+
+            // 3) 여행지
+            const tdLocation = document.createElement('td');
+            tdLocation.className = 'border px-4 py-2';
+            tdLocation.textContent = slot.location;
+            tr.appendChild(tdLocation);
+
+            // 4) 음식점 (이름/메뉴/가격/전화/주소)
+            const tdRestaurant = document.createElement('td');
+            tdRestaurant.className = 'border px-4 py-2';
+            if (slot.restaurant) {
+              const r = slot.restaurant;
+              tdRestaurant.innerHTML = `
+                <div class="text-left">
+                  <p class="font-semibold">${r.name}</p>
+                  <p>메뉴: ${r.menu} / 가격: ${r.price}</p>
+                  <p>주소: ${r.address}</p>
+                  <p>전화: ${r.phone}</p>
+                </div>`;
+            } else {
+              tdRestaurant.textContent = '-';
+            }
+            tr.appendChild(tdRestaurant);
+
+            // 5) 숙소 (저가/중가/고가)
+            const tdLodging = document.createElement('td');
+            tdLodging.className = 'border px-4 py-2';
+            if (slot.lodging) {
+              const l = slot.lodging;
+              tdLodging.innerHTML = `
+                <div class="text-left space-y-2">
+                  <!-- 저가 -->
+                  <div>
+                    <p class="font-semibold text-sm">[저가] ${l.budget.name} (${l.budget.price})</p>
+                    <p class="text-xs">주소: ${l.budget.address}</p>
+                    <p class="text-xs">전화: ${l.budget.phone}</p>
+                  </div>
+                  <!-- 중가 -->
+                  <div>
+                    <p class="font-semibold text-sm">[중가] ${l.midrange.name} (${l.midrange.price})</p>
+                    <p class="text-xs">주소: ${l.midrange.address}</p>
+                    <p class="text-xs">전화: ${l.midrange.phone}</p>
+                  </div>
+                  <!-- 고가 -->
+                  <div>
+                    <p class="font-semibold text-sm">[고가] ${l.premium.name} (${l.premium.price})</p>
+                    <p class="text-xs">주소: ${l.premium.address}</p>
+                    <p class="text-xs">전화: ${l.premium.phone}</p>
+                  </div>
+                </div>`;
+            } else {
+              tdLodging.textContent = '-';
+            }
+            tr.appendChild(tdLodging);
+
+            tbody.appendChild(tr);
+          });
+        });
+
+        table.appendChild(tbody);
+
+        // (이미 테이블이 들어 있었다면 덮어쓰기)
+        container.innerHTML = '';
+        container.appendChild(table);
+      }
+
+      // ----------------------------------------------------------------------
+      // 4. 지도에 샘플 경로를 표시하는 함수 (선택 사항)
+      // ----------------------------------------------------------------------
+      function renderMapWithSampleCoordinates() {
+        // map <div> 보이게 하고, 이미 초기화된 map.invalidateSize() 호출
+        document.getElementById('map').classList.remove('hidden');
+        setTimeout(() => map.invalidateSize(), 200);
+
+        // 샘플 좌표: 실제 백엔드→GPT에서 받은 장소 이름을 Geocoding으로 바꾸면 여기에 넣습니다.
+        const sampleCoords = [
+          [35.8190, 127.1480], // 한옥마을
+          [35.8152, 127.1470], // 전동성당
+          [35.8155, 127.1447]  // 남부시장
+        ];
+        plotRoute(sampleCoords);
+      }
+
+      // (5) Leaflet 지도 초기화: 위에서 선언된 map 과 plotRoute 사용
+      let map = L.map('map').setView([35.8180, 127.1470], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      function plotRoute(coordsArray) {
+        coordsArray.forEach((coord, idx) => {
+          const marker = L.marker(coord).addTo(map);
+          marker.bindPopup(`경유 ${idx + 1}`);
+        });
+        L.polyline(coordsArray, { color: 'blue', weight: 4 }).addTo(map);
+      }
+    });
+  </script>
+</body>
 </html>

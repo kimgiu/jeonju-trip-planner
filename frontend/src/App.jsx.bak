@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import PlanTable from './components/PlanTable';
+import PlanTable from './components/PlanTable.jsx';
 
 function App() {
   const [plan, setPlan] = useState([]);

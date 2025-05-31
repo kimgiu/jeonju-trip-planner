@@ -10,7 +10,7 @@ function App() {
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            const response = await axios.post('https://jeonju-trip-planner.onrender.com/api/generate', {
+            const response = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
                 startDate: '2025-06-01',
                 days: 3,
                 language: 'ko'

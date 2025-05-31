@@ -10,7 +10,7 @@ export default function ItineraryForm({ onResult }) {
     e.preventDefault();
 
     try {
-      const res = await axios.post('https://jeonju-trip-planner.onrender.com/api/generate', {
+      const res = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
         startDate,
         days,
         language,

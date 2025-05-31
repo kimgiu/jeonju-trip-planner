@@ -9,11 +9,11 @@ function App() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('https://jeonju-trip-planner.onrender.com/api/generate', {
-        startDate: '2025-06-01',
-        endDate: '2025-06-03',
-        language: 'ko'
-      });
+const response = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
+  startDate: '2025-06-01',
+  days: 3,
+  language: 'ko'
+});
       setPlan(response.data.plan);
     } catch (error) {
       console.error('Error fetching trip plan:', error);

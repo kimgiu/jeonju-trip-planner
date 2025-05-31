@@ -6,21 +6,26 @@ function App() {
   const [plan, setPlan] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-const response = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
-  startDate: '2025-06-01',
-  days: 3,
-  language: 'ko'
-});
-      setPlan(response.data.plan);
-    } catch (error) {
-      console.error('Error fetching trip plan:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleGenerate = async () => {
+  setLoading(true);
+  console.log("🟢 일정 생성 시작"); // ✅ 요청 시작 로그
+
+  try {
+    const response = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
+      startDate: '2025-06-01',
+      days: 3,
+      language: 'ko'
+    });
+    console.log("✅ GPT 응답 수신:", response.data); // ✅ 응답 확인
+
+    setPlan(response.data.plan);
+  } catch (error) {
+    console.error("❌ GPT 요청 실패:", error); // ❌ 에러 로그
+    alert("GPT 요청에 실패했습니다: " + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{ padding: '20px' }}>

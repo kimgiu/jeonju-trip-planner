@@ -1,48 +1,67 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
 
-export default function ItineraryForm({ onResult }) {
-  const [startDate, setStartDate] = useState("");
-  const [days, setDays] = useState(2);
-  const [language, setLanguage] = useState("한국어");
+function ItineraryForm({ onGenerate }) {
+  const [startDate, setStartDate] = useState('');
+  const [days, setDays] = useState(3);
+  const [language, setLanguage] = useState('ko');
+  const [foodDetail, setFoodDetail] = useState(true);
+  const [hotelDetail, setHotelDetail] = useState(true);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      const res = await axios.post('https://jeonju-backend.onrender.com/api/generate', {
-        startDate,
-        days,
-        language,
-      });
-
-      onResult(res.data.itinerary); // 부모에 전달
-    } catch (err) {
-      alert("GPT 일정 생성 실패: " + err.message);
-    }
+    onGenerate({
+      startDate,
+      days: Number(days),
+      language,
+      foodDetail,
+      hotelDetail
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded shadow">
-      <div>
-        <label className="block mb-1 font-medium">여행 시작일:</label>
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required className="border rounded px-3 py-2 w-full" />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">여행 일수:</label>
-        <input type="number" min={1} max={10} value={days} onChange={(e) => setDays(e.target.value)} required className="border rounded px-3 py-2 w-full" />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">언어 선택:</label>
-        <select value={language} onChange={(e) => setLanguage(e.target.value)} className="border rounded px-3 py-2 w-full">
-          <option>한국어</option>
-          <option>English</option>
-          <option>日本語</option>
-        </select>
-      </div>
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        일정 생성하기
-      </button>
+    <form onSubmit={handleSubmit} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+      <table>
+        <tbody>
+          <tr>
+            <td>여행 시작일:</td>
+            <td><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required /></td>
+          </tr>
+          <tr>
+            <td>여행 일수:</td>
+            <td>
+              <select value={days} onChange={e => setDays(e.target.value)}>
+                {[1, 2, 3, 4, 5, 6, 7].map(d => (
+                  <option key={d} value={d}>{d}일</option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>언어:</td>
+            <td>
+              <select value={language} onChange={e => setLanguage(e.target.value)}>
+                <option value="ko">한국어</option>
+                <option value="en">영어</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>음식점 상세 정보 포함:</td>
+            <td>
+              <input type="checkbox" checked={foodDetail} onChange={e => setFoodDetail(e.target.checked)} /> 예 (메뉴/가격/주소/전화 포함)
+            </td>
+          </tr>
+          <tr>
+            <td>숙소 추천 포함:</td>
+            <td>
+              <input type="checkbox" checked={hotelDetail} onChange={e => setHotelDetail(e.target.checked)} /> 예 (가격대/주소/전화 포함)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="submit" style={{ marginTop: '1rem' }}>여행 일정 생성하기</button>
     </form>
   );
 }
+
+export default ItineraryForm;

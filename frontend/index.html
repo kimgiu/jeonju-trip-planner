@@ -1,12 +1,160 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jeonju GPT</title>
-  </head>
-  <body class="bg-gray-100 text-gray-900">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>전주 여행 블로그 & 일정 생성기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-Rksm4bM8t0YH7LgW1FsKFTQ/8N6Z5cP06/T+3Js9f+g=" crossorigin=""/>
+  <!-- Leaflet JS (defer하여 문서 파싱 후 로드) -->
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j8k9N2t+9sS+VihG63RaHkItmjWc8Yu3r3G4hJM=" crossorigin=""></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <!-- 헤더 -->
+  <header class="bg-white shadow-md">
+    <div class="container mx-auto flex items-center justify-between py-4 px-6">
+      <div class="text-2xl font-bold text-green-600">전주 여행 일정 생성기</div>
+      <nav class="space-x-4">
+        <a href="#" class="text-gray-600 hover:text-green-600">홈</a>
+        <a href="#destinations" class="text-gray-600 hover:text-green-600">추천 여행지</a>
+        <a href="#reviews" class="text-gray-600 hover:text-green-600">여행 후기</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 메인: 일정 생성기 섹션 -->
+  <section class="bg-white mt-6 py-8 shadow-lg">
+    <div class="container mx-auto px-6">
+      <h2 class="text-3xl font-semibold text-center text-gray-800 mb-6">나만의 전주 여행 일정 만들기</h2>
+      <div class="max-w-xl mx-auto">
+        <!-- 언어 선택 -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">언어 선택:</label>
+          <select id="languageSelect" class="w-full border rounded-md p-2">
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+        <!-- 일정 생성 버튼 -->
+        <button id="generateBtn" class="w-full bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700">
+          여행 일정 생성하기
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 일정 결과 출력 섹션 -->
+  <section id="itineraryResult" class="container mx-auto px-6 mt-8 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-2xl font-semibold text-gray-800 mb-4">생성된 여행 일정</h3>
+      <div id="itineraryContent" class="prose mb-6"></div>
+      <!-- 지도 표시 영역 -->
+      <div id="map" class="w-full h-96 rounded-lg"></div>
+    </div>
+  </section>
+
+  <!-- 추천 여행지 섹션 -->
+  <section id="destinations" class="container mx-auto px-6 mt-12">
+    <h2 class="text-3xl font-semibold text-gray-800 mb-6">추천 여행지</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- 추천 카드 1 -->
+      <article class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <img src="https://source.unsplash.com/400x300?hanok" alt="한옥마을" class="w-full h-48 object-cover" />
+        <div class="p-4">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">전주 한옥마을</h3>
+          <p class="text-gray-600 text-sm">전통 한옥이 모여 있는 한국의 대표적인 문화 거리. 전통체험과 길거리 음식이 유명하세요.</p>
+        </div>
+      </article>
+      <!-- 추천 카드 2 -->
+      <article class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <img src="https://source.unsplash.com/400x300?temple" alt="전동성당" class="w-full h-48 object-cover" />
+        <div class="p-4">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">전동성당</h3>
+          <p class="text-gray-600 text-sm">고딕 양식으로 지어진 전주 전동성당은 아름다운 외관과 여유로운 분위기를 제공합니다.</p>
+        </div>
+      </article>
+      <!-- 추천 카드 3 -->
+      <article class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <img src="https://source.unsplash.com/400x300?food,korean" alt="남부시장" class="w-full h-48 object-cover" />
+        <div class="p-4">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">남부시장</h3>
+          <p class="text-gray-600 text-sm">전통 시장의 활기와 다양한 먹거리를 즐길 수 있는 명소입니다.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 여행 후기 섹션 -->
+  <section id="reviews" class="container mx-auto px-6 mt-12 mb-12">
+    <h2 class="text-3xl font-semibold text-gray-800 mb-6">여행 후기</h2>
+    <div class="space-y-6">
+      <!-- 후기 카드 1 -->
+      <article class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-2">감성 충만 전주 야경 투어 후기</h3>
+        <p class="text-gray-600 text-sm">작성자: 여행러 박민수 | 2025.06.10</p>
+        <p class="mt-4 text-gray-700">전주 한옥마을의 야경을 걸으며 찍은 사진들, 그리고 맛있는 야시장 음식을 즐긴 이야기를 담았습니다.</p>
+        <a href="#" class="inline-block mt-4 text-green-600 font-semibold hover:underline">더 읽기 →</a>
+      </article>
+      <!-- 후기 카드 2 -->
+      <article class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-2">전주에서 만난 최고의 콩나물국밥</h3>
+        <p class="text-gray-600 text-sm">작성자: 미식가 이준호 | 2025.06.08</p>
+        <p class="mt-4 text-gray-700">추운 날씨에 딱! 따끈한 콩나물국밥을 먹으며 느꼈던 그 감동이 아직도 생생합니다.</p>
+        <a href="#" class="inline-block mt-4 text-green-600 font-semibold hover:underline">더 읽기 →</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="bg-gray-800 text-gray-400 py-6">
+    <div class="container mx-auto text-center text-sm">
+      <p>&copy; 2025 전주 여행 블로그. All rights reserved.</p>
+      <p class="mt-2">Designed with ❤️ by 김길</p>
+    </div>
+  </footer>
+
+  <!-- 자바스크립트: 일정 생성 및 지도 표시 -->
+  <script>
+    // Leaflet 로드가 완료된 후 DOMContentLoaded 발생
+    document.addEventListener('DOMContentLoaded', () => {
+      // 지도 초기화 및 샘플 경로 좌표
+      let map = L.map('map').setView([35.8180, 127.1470], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const sampleCoords = [
+        { name: '한옥마을', coords: [35.8190, 127.1480] },
+        { name: '전동성당', coords: [35.8152, 127.1470] },
+        { name: '남부시장', coords: [35.8155, 127.1447] }
+      ];
+
+      function plotSampleRoute() {
+        const latlngs = sampleCoords.map(loc => loc.coords);
+        sampleCoords.forEach(loc => {
+          L.marker(loc.coords).addTo(map).bindPopup(loc.name);
+        });
+        L.polyline(latlngs, { color: 'blue' }).addTo(map);
+      }
+
+      document.getElementById('generateBtn').addEventListener('click', () => {
+        const resultSection = document.getElementById('itineraryResult');
+        const contentDiv = document.getElementById('itineraryContent');
+        contentDiv.innerHTML = '<p class="text-gray-700">여행 일정을 생성 중입니다...</p>';
+        resultSection.classList.remove('hidden');
+        // 샘플 일정 및 지도 표시
+        setTimeout(() => {
+          contentDiv.innerHTML = '<pre class="whitespace-pre-wrap">Day1: 한옥마을 → 전동성당 → 남부시장</pre>';
+          plotSampleRoute();
+          map.invalidateSize(); // 지도 리사이징 오류 방지
+        }, 1500);
+      });
+    });
+  </script>
+</body>
 </html>

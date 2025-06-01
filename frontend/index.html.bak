@@ -2,297 +2,119 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>나홀로 떠나는 전주여행</title>
-
-  <!-- TailwindCSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Kakao Map JS API (본인 JS key로 교체!) -->
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=여기에_카카오_JAVASCRIPT_KEY_입력&libraries=services"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    #map { width: 100%; height: 500px; margin-top: 1rem; border-radius: 0.5rem; }
+    body { background: #f4f4f4; }
+    #map { height: 420px; width: 100%; margin: 2rem 0; }
+    .container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px #0001; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+    th, td { border: 1px solid #d2d2d2; padding: 0.5rem; text-align: center; }
+    th { background: #e0f2f1; }
+    h1 { text-align: center; color: #17a04c; margin: 2rem 0 1rem 0; }
+    .legend-dot { display: inline-block; width: 1em; height: 1em; border-radius: 9999px; margin-right: 0.5em; vertical-align: middle; }
   </style>
 </head>
-<body class="bg-gray-100">
-
-  <!-- 헤더 -->
-  <header class="bg-green-600 text-white py-4 mb-6">
-    <h1 class="text-center text-3xl font-bold">나홀로 떠나는 전주여행</h1>
-  </header>
-
-  <main class="container mx-auto px-4">
-    <!-- 일정 생성 폼 -->
-    <section class="bg-white p-6 rounded-lg shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">나만의 전주여행 일정 만들기</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <!-- 시작 날짜 -->
-        <div>
-          <label for="startDate" class="block mb-2">여행 시작일:</label>
-          <input id="startDate" type="date" class="w-full border border-gray-300 rounded px-3 py-2" />
-        </div>
-        <!-- 여행 일수 -->
-        <div>
-          <label for="numDays" class="block mb-2">여행 일수:</label>
-          <input id="numDays" type="number" min="1" max="7" value="1" class="w-full border border-gray-300 rounded px-3 py-2" />
-        </div>
-        <!-- 언어 선택 -->
-        <div>
-          <label for="languageSelect" class="block mb-2">언어 선택:</label>
-          <select id="languageSelect" class="w-full border border-gray-300 rounded px-3 py-2">
-            <option value="ko">한국어</option>
-            <option value="en">영어</option>
-          </select>
-        </div>
-      </div>
-      <button id="generateBtn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded">
-        여행 일정 생성하기
-      </button>
-    </section>
-
-    <!-- 일정 표 및 지도 영역 -->
-    <section id="itinerarySection" class="hidden bg-white p-6 rounded-lg shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">생성된 일정 (표 및 지도)</h2>
-      <!-- 표 표시 -->
-      <div id="itineraryTableContainer" class="overflow-x-auto mb-6"></div>
-      <!-- 지도 표시 -->
+<body>
+  <h1>나홀로 떠나는 전주여행</h1>
+  <div class="container">
+    <h2>여행 일정 (테스트 데이터)</h2>
+    <div id="plan-table"></div>
+    <div>
       <div id="map"></div>
-    </section>
+      <div id="legend"></div>
+    </div>
+  </div>
 
-    <!-- 추천 여행지 카드 -->
-    <section class="bg-white p-6 rounded-lg shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">추천 여행지</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/400x240?text=전주+한옥마을" alt="전주 한옥마을" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">전주 한옥마을</h3>
-            <p class="text-gray-600 mt-2">조선시대 전통 가옥이 모여있는 대표 관광지</p>
-          </div>
-        </div>
-        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/400x240?text=전동성당" alt="전동성당" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">전동성당</h3>
-            <p class="text-gray-600 mt-2">고딕 양식의 아름다운 성당, 야경이 유명</p>
-          </div>
-        </div>
-        <div class="bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-lg transition">
-          <img src="https://via.placeholder.com/400x240?text=남부시장" alt="남부시장" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">남부시장</h3>
-            <p class="text-gray-600 mt-2">전북 대표 재래시장, 다양한 전통 먹거리</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- 메인 스크립트 -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // 예시: 전주 주요 장소 하드코딩 좌표
-    const JEONJU_PLACE_COORDS = {
-      "전주 한옥마을": [35.8158682, 127.1506288],
-      "전동성당": [35.814906, 127.147415],
-      "남부시장": [35.814573, 127.146947],
-      "경기전": [35.815869, 127.148566],
-      "오목대": [35.818208, 127.152091],
-      "자만벽화마을": [35.818678, 127.154288],
-      "전주향교": [35.819001, 127.154439],
-      "전주동물원": [35.802146, 127.134349],
-      "덕진공원": [35.842650, 127.119690],
-      "국립전주박물관": [35.817866, 127.129151],
-      "전주영화의거리": [35.814592, 127.137936],
-      "한국소리문화의전당": [35.837094, 127.116469],
-      "풍남문": [35.813829, 127.150227]
+    // 1. 샘플 여행일정 데이터 (실제론 fetch로 받아오세요!)
+    // location 값이 '좌표'로 매칭되어야 함!
+    const plan = [
+      {
+        date: "2024-06-06",
+        slots: [
+          { time: "10:00", location: "전주 한옥마을" },
+          { time: "12:00", location: "전동성당" },
+          { time: "13:00", location: "남부시장" }
+        ]
+      },
+      {
+        date: "2024-06-07",
+        slots: [
+          { time: "10:30", location: "경기전" },
+          { time: "12:30", location: "오목대" },
+          { time: "15:00", location: "전주 동물원" }
+        ]
+      }
+    ];
+
+    // 2. 전주 주요장소 → 좌표 매핑 (없으면 기본)
+    const locationCoords = {
+      "전주 한옥마을": [35.8163, 127.1530],
+      "전동성당": [35.8146, 127.1472],
+      "남부시장": [35.8155, 127.1447],
+      "경기전": [35.8158, 127.1475],
+      "오목대": [35.8167, 127.1487],
+      "전주 동물원": [35.8305, 127.1481],
+      // 추가 장소 ↓
+      "전주국립박물관": [35.8106, 127.1152],
+      "풍남문": [35.8133, 127.1494],
+      "전주역": [35.8495, 127.1621],
+      "한지박물관": [35.8030, 127.1675]
     };
 
-    let map, kakao;
-
-    function renderItineraryTable(planArray) {
-      const container = document.getElementById('itineraryTableContainer');
-      container.innerHTML = '';
-      const table = document.createElement('table');
-      table.className = 'min-w-full bg-white border border-gray-200';
-
-      const thead = document.createElement('thead');
-      thead.innerHTML = `
-        <tr class="bg-green-100 text-gray-700">
-          <th class="border px-4 py-2">날짜</th>
-          <th class="border px-4 py-2">시간</th>
-          <th class="border px-4 py-2">여행지</th>
-          <th class="border px-4 py-2">음식점</th>
-          <th class="border px-4 py-2">숙소(저가/중가/고가)</th>
-        </tr>`;
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      planArray.forEach(day => {
-        const date = day.date;
-        day.slots.forEach(slot => {
-          const tr = document.createElement('tr');
-          tr.className = 'text-center text-gray-800';
-          const tdDate = document.createElement('td');
-          tdDate.className = 'border px-4 py-2';
-          tdDate.textContent = date;
-          tr.appendChild(tdDate);
-
-          const tdTime = document.createElement('td');
-          tdTime.className = 'border px-4 py-2';
-          tdTime.textContent = slot.time;
-          tr.appendChild(tdTime);
-
-          const tdLocation = document.createElement('td');
-          tdLocation.className = 'border px-4 py-2';
-          tdLocation.textContent = slot.location;
-          tr.appendChild(tdLocation);
-
-          const tdRestaurant = document.createElement('td');
-          tdRestaurant.className = 'border px-4 py-2 text-left';
-          if (slot.restaurant) {
-            const r = slot.restaurant;
-            tdRestaurant.innerHTML = `
-              <p class="font-semibold">${r.name}</p>
-              <p class="text-sm">메뉴: ${r.menu} / 가격: ${r.price}</p>
-              <p class="text-sm">주소: ${r.address}</p>
-              <p class="text-sm">전화: ${r.phone}</p>
-            `;
-          } else {
-            tdRestaurant.textContent = '-';
-          }
-          tr.appendChild(tdRestaurant);
-
-          const tdLodging = document.createElement('td');
-          tdLodging.className = 'border px-4 py-2 text-left';
-          if (slot.lodging) {
-            const l = slot.lodging;
-            tdLodging.innerHTML = `
-              <div class="space-y-1">
-                <div>
-                  <span class="font-semibold text-sm">[저가] ${l.budget.name}</span>
-                  <span class="text-sm">(${l.budget.price})</span>
-                  <p class="text-xs">주소: ${l.budget.address}</p>
-                  <p class="text-xs">전화: ${l.budget.phone}</p>
-                </div>
-                <div>
-                  <span class="font-semibold text-sm">[중가] ${l.midrange.name}</span>
-                  <span class="text-sm">(${l.midrange.price})</span>
-                  <p class="text-xs">주소: ${l.midrange.address}</p>
-                  <p class="text-xs">전화: ${l.midrange.phone}</p>
-                </div>
-                <div>
-                  <span class="font-semibold text-sm">[고가] ${l.premium.name}</span>
-                  <span class="text-sm">(${l.premium.price})</span>
-                  <p class="text-xs">주소: ${l.premium.address}</p>
-                  <p class="text-xs">전화: ${l.premium.phone}</p>
-                </div>
-              </div>`;
-          } else {
-            tdLodging.textContent = '-';
-          }
-          tr.appendChild(tdLodging);
-          tbody.appendChild(tr);
-        });
-      });
-
-      table.appendChild(tbody);
-      container.appendChild(table);
+    // 좌표 없는 경우 대체
+    function getCoord(location) {
+      return locationCoords[location] || [35.8242, 127.1479];
     }
 
-    // 지도에 일정별로 경로와 마커 찍기
-    function plotAllDaysOnMap(planArray) {
-      // 지도 없으면 생성
-      if (!map) {
-        map = new kakao.maps.Map(document.getElementById('map'), {
-          center: new kakao.maps.LatLng(35.8158682, 127.1506288),
-          level: 4 // zoom level
+    // 3. 일정 표 렌더
+    function renderPlanTable(plan) {
+      let html = `<table><thead>
+        <tr><th>날짜</th><th>시간</th><th>여행지</th></tr>
+      </thead><tbody>`;
+      plan.forEach(day => {
+        day.slots.forEach((slot, idx) => {
+          html += `<tr>
+            <td>${idx === 0 ? day.date : ""}</td>
+            <td>${slot.time}</td>
+            <td>${slot.location}</td>
+          </tr>`;
         });
-      }
-
-      // 지도 클리어 (마커, 선)
-      if (window.markers) window.markers.forEach(m => m.setMap(null));
-      if (window.polylines) window.polylines.forEach(l => l.setMap(null));
-      window.markers = [];
-      window.polylines = [];
-
-      const colors = ['#007bff', '#dc3545', '#28a745', '#6610f2', '#fd7e14', '#20c997'];
-
-      planArray.forEach((day, dayIndex) => {
-        const coords = day.slots.map(slot => {
-          const latlng = JEONJU_PLACE_COORDS[slot.location] || [35.8158682, 127.1506288];
-          return new kakao.maps.LatLng(latlng[0], latlng[1]);
-        });
-
-        // 마커 및 라벨
-        coords.forEach((latlng, idx) => {
-          const marker = new kakao.maps.Marker({
-            position: latlng,
-            map: map
-          });
-          window.markers.push(marker);
-          // 인포윈도우(팝업)
-          const infowindow = new kakao.maps.InfoWindow({
-            content: `<div style="padding:4px 8px;font-size:13px;">${day.date} Day${dayIndex + 1}: ${day.slots[idx].location}</div>`
-          });
-          kakao.maps.event.addListener(marker, 'mouseover', function() { infowindow.open(map, marker); });
-          kakao.maps.event.addListener(marker, 'mouseout', function() { infowindow.close(); });
-        });
-
-        // 경로(폴리라인)
-        const polyline = new kakao.maps.Polyline({
-          path: coords,
-          strokeWeight: 4,
-          strokeColor: colors[dayIndex % colors.length],
-          strokeOpacity: 0.9,
-          strokeStyle: 'solid',
-          map: map
-        });
-        window.polylines.push(polyline);
-
-        // 첫 일정 좌표로 지도 센터 이동
-        if (dayIndex === 0 && coords[0]) map.setCenter(coords[0]);
       });
+      html += `</tbody></table>`;
+      document.getElementById('plan-table').innerHTML = html;
     }
+    renderPlanTable(plan);
 
-    // 일정 생성 버튼 클릭 이벤트
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('generateBtn').addEventListener('click', async () => {
-        const startDate = document.getElementById('startDate').value;
-        const numDays = parseInt(document.getElementById('numDays').value);
-        const language = document.getElementById('languageSelect').value;
-        const section = document.getElementById('itinerarySection');
-        const tableContainer = document.getElementById('itineraryTableContainer');
+    // 4. 지도 초기화
+    const map = L.map('map').setView([35.8242, 127.1479], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-        // (임시) 샘플 일정 - 실제론 백엔드에서 받아오는 데이터 사용
-        const samplePlan = [
-          {
-            date: "2025-07-01",
-            slots: [
-              { time: "09:00", location: "전주 한옥마을" },
-              { time: "12:00", location: "남부시장" },
-              { time: "15:00", location: "경기전" }
-            ]
-          },
-          {
-            date: "2025-07-02",
-            slots: [
-              { time: "09:00", location: "전동성당" },
-              { time: "12:00", location: "오목대" },
-              { time: "15:00", location: "자만벽화마을" }
-            ]
-          }
-        ];
+    // 5. 일정별 경로 및 마커
+    const colors = ["#1976d2", "#c62828", "#2e7d32", "#f9a825", "#6a1b9a"];
+    let legendHtml = "";
 
-        // 실제 백엔드 연동 예시:
-        // const res = await fetch("https://jeonju-backend.onrender.com/api/generate", { ... });
-        // const { plan } = await res.json();
+    plan.forEach((day, dayIdx) => {
+      const color = colors[dayIdx % colors.length];
+      legendHtml += `<span class="legend-dot" style="background:${color}"></span>Day${dayIdx+1} &nbsp;`;
 
-        section.classList.remove('hidden');
-        renderItineraryTable(samplePlan);
-        plotAllDaysOnMap(samplePlan);
+      const dayCoords = day.slots.map(slot => getCoord(slot.location));
+      // 1) 경로(폴리라인)
+      L.polyline(dayCoords, { color, weight: 5, opacity: 0.75 }).addTo(map);
+      // 2) 마커 + 팝업 (시간/이름)
+      day.slots.forEach((slot, idx) => {
+        const marker = L.marker(dayCoords[idx]).addTo(map);
+        marker.bindPopup(
+          `<b>${day.date} (Day${dayIdx+1})</b><br>${slot.time} - ${slot.location}`
+        );
       });
     });
+    document.getElementById('legend').innerHTML = "<b>경로 색상:</b> " + legendHtml;
   </script>
 </body>
 </html>

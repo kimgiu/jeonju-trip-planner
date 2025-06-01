@@ -2,54 +2,24 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>전주여행 일정 만들기</title>
+  <title>나만의 전주여행 일정 만들기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <style>
-    body { background: #f5f7fa; font-family: 'Noto Sans KR', sans-serif; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 32px 0;}
-    h1 { font-size: 2.2rem; color: #199c2e; font-weight: 700; margin-bottom: 28px;}
-    .step-card {background: #fff; border-radius: 13px; box-shadow:0 2px 12px #0001; padding:32px; max-width:600px; margin:0 auto;}
-    .step-card label {display:block; margin-bottom:8px; font-weight:500;}
-    .step-card input, .step-card select {width:100%; margin-bottom:20px; border:1px solid #ccc; border-radius:6px; padding:10px 14px;}
-    .step-card button {background:#199c2e; color:#fff; font-weight:600; border:none; border-radius:7px; padding:14px 0; font-size:1.15em; width:100%; margin-top:12px; cursor:pointer;}
-    #plan-section {display:none;}
-    .flex { display: flex; gap: 38px;}
-    #map {width: 480px; min-width:320px; height: 640px; border-radius: 13px; border:1.5px solid #e2e2e2;}
-    .plan-list {flex:1;}
-    .plan-day {background:#fff; border-radius:10px; box-shadow:0 2px 9px #0001; margin-bottom:16px; padding:18px 22px;}
-    .plan-day h2 {color:#179c4a; font-size:1.3em;}
-    .detail-card {margin-bottom:10px; background:#f5fff5; border-radius:6px; padding:12px 15px;}
-    .detail-title {font-weight:700;}
-    .tag {background:#e0f5e7; color:#148e31; padding:2px 8px; font-size:.93em; border-radius:6px; margin-right:8px;}
-    .place-link {color:#1d6df3; text-decoration:underline; cursor:pointer;}
-    .dist-info {font-size:.94em; color:#4b4b9d; margin:2px 0 8px 0;}
-    .toolbar {margin-bottom:14px;}
-    .toolbar button {background:#127c3a; color:#fff; border:none; border-radius:6px; padding:7px 20px; margin-right:10px; font-size:1em;}
-    @media (max-width: 900px) { .flex {flex-direction:column;} #map {width:100%;height:300px;} }
+    #map { height: 400px; min-width: 400px; }
+    .flex { display: flex; gap: 24px; }
+    .plan-list { min-width: 300px; }
+    #plan-section { display: none; }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>나만의 전주여행 일정 만들기</h1>
-  <!-- STEP 1: 첫화면 - 일정 입력 -->
-  <section class="step-card" id="input-section">
-    <label>여행 출발일</label>
-    <input type="date" id="start-date" required />
-    <label>여행 기간 (박수)</label>
-    <select id="duration">
-      <option value="1">1박 2일</option>
-      <option value="2">2박 3일</option>
-      <option value="3">3박 4일</option>
-    </select>
-    <label>인원</label>
-    <select id="people">
-      <option value="1">1명</option>
-      <option value="2">2명</option>
-      <option value="3">3명</option>
-      <option value="4">4명 이상</option>
-    </select>
+  <!-- STEP 1: 입력폼 -->
+  <section id="input-section">
+    <h2>나만의 전주여행 일정 만들기</h2>
+    <label>여행 출발일 <input type="date" id="start-date"></label>
+    <label>여행 일수 <input type="number" id="days" min="1" max="7" value="2"></label>
+    <label>인원 <input type="number" id="people" min="1" max="10" value="1"></label>
     <button onclick="generatePlan()">여행 일정 생성</button>
   </section>
 
@@ -65,158 +35,99 @@
   </section>
 </div>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-const API_URL = "https://jeonju-backend.onrender.com/api/plan"; // 백엔드에 맞게 변경
-
-function goToInput() {
-  document.getElementById('plan-section').style.display = 'none';
-  document.getElementById('input-section').style.display = '';
-  window.scrollTo(0,0);
-}
-
-// === 여행 일정 생성 (API 연동) ===
-async function generatePlan() {
-  const startDate = document.getElementById('start-date').value;
-  const duration = parseInt(document.getElementById('duration').value);
-  const people = parseInt(document.getElementById('people').value);
-  if(!startDate) { alert('출발일을 선택하세요!'); return; }
-  // 백엔드로 요청 (아래 body는 실제 API에 맞게 수정)
-  try {
-    // 아래는 샘플, 실제 백엔드 구현에 따라 data 구조 맞추세요!
-    // const res = await axios.post(API_URL, { startDate, days: duration+1, people });
-    // const { plan } = res.data;
-    // 여기서는 "가짜 샘플 데이터"로 대체
-    const plan = samplePlanData(startDate, duration+1);
-    showPlan(plan);
-  } catch (e) {
-    alert('일정 생성 실패: '+e);
-  }
-}
-
-// === 일정+지도 표시 ===
-let map;
-function showPlan(plan) {
-  document.getElementById('input-section').style.display = 'none';
-  document.getElementById('plan-section').style.display = '';
-
-  // 지도
-  if(map) map.remove();
-  map = L.map('map').setView([35.8159, 127.1532], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'&copy; OpenStreetMap'
-  }).addTo(map);
-
-  // 내위치 (GPS)
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const {latitude, longitude} = pos.coords;
-      L.marker([latitude, longitude],{icon:L.icon({iconUrl:"https://cdn-icons-png.flaticon.com/512/684/684908.png", iconSize:[28,28]})})
-        .addTo(map).bindPopup('내 위치');
-    });
+  // 화면 전환 함수
+  function goToInput() {
+    document.getElementById('plan-section').style.display = 'none';
+    document.getElementById('input-section').style.display = 'block';
   }
 
-  // 일정 표시
-  let planList = document.getElementById('plan-list');
-  planList.innerHTML = '';
-  plan.forEach((day,di)=>{
-    let dayDiv = document.createElement('div');
-    dayDiv.className = 'plan-day';
-    dayDiv.innerHTML = `<h2>${di+1}일차 <span style="color:#888;font-size:.95em">${day.date}</span></h2>`;
-    let prev = null, dayCoords = [];
-    day.slots.forEach((item,idx)=>{
-      let html = `<div class="detail-card">`;
-      if(item.type==='place'){
-        html += `<span class="tag">관광지</span> <span class="detail-title">${item.name}</span>`;
-        if(item.address) html += `<div>${item.address}</div>`;
-        if(item.parking) html += `<div>주차장: ${item.parking}</div>`;
-        if(prev) html += `<div class="dist-info">이전장소와 거리: ${calcDistance(prev.lat, prev.lng, item.lat, item.lng)} km</div>`;
-        dayCoords.push([item.lat,item.lng]);
-        // 지도 마커
-        let marker = L.marker([item.lat,item.lng]).addTo(map).bindPopup(`${item.name}`);
-        marker._icon.title = item.name;
-      }
-      if(item.restaurants && item.restaurants.length){
-        html += `<div class="tag">추천 음식점</div>`;
-        item.restaurants.forEach(r=>{
-          html += `<div style="margin-bottom:6px;">
-            <b>${r.name}</b> <span style="font-size:.94em">(${r.menu} - ${r.price})</span>
-            <div style="font-size:.93em">전화:${r.phone} | 주소:${r.address} | 주차:${r.parking||'-'}</div>
-          </div>`;
-        });
-      }
-      if(item.hotels && item.hotels.length){
-        html += `<div class="tag">추천 숙소</div>`;
-        item.hotels.forEach(h=>{
-          html += `<div style="margin-bottom:6px;">
-            <b>${h.name}</b> (${h.grade})<br>전화:${h.phone} | 주소:${h.address} | 주차:${h.parking||'-'}<br>
-            <span style="font-size:.94em">편의시설: ${h.facility||'-'}</span>
-          </div>`;
-        });
-      }
-      html += `</div>`;
-      dayDiv.innerHTML += html;
-      prev = item;
-    });
-    // 당일 이동 경로 폴리라인
-    if(dayCoords.length>1){
-      L.polyline(dayCoords,{color:['#199c2e','#0d6efd','#e34c4c'][di%3],weight:4}).addTo(map);
-    }
-    planList.appendChild(dayDiv);
-  });
-}
+  function showPlanSection() {
+    document.getElementById('plan-section').style.display = 'block';
+    document.getElementById('input-section').style.display = 'none';
+  }
 
-// === 거리계산 (km) ===
-function calcDistance(lat1, lon1, lat2, lon2){
-  function toRad(v){ return v*Math.PI/180;}
-  const R=6371, dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
-}
-
-// === (샘플용) 일정+맛집+숙소 데이터 생성 ===
-function samplePlanData(startDate, days){
-  // 실 서비스에선 API서 받아온 데이터 구조로 렌더
-  // 장소 좌표, 추천 음식점/숙소, 편의시설 등은 DB/AI 추천 연동!
-  const base = [
+  // 예시 일정 데이터
+  const samplePlan = [
     {
-      type:'place', name:'전주 한옥마을', lat:35.8159, lng:127.1532, address:'전주시 완산구 교동', parking:'O',
-      restaurants: [
-        {name:'삼백집', menu:'콩나물국밥', price:'9000원', phone:'063-284-2227', address:'전동3가 2-1', parking:'O'},
-        {name:'베테랑칼국수', menu:'칼국수', price:'8000원', phone:'063-285-9898', address:'경기전길 135', parking:'X'},
-      ],
-      hotels: [
-        {name:'라한호텔', grade:'4성', phone:'063-230-7000', address:'전동 40-1', parking:'O', facility:'와이파이,조식,피트니스'},
-        {name:'라마다호텔', grade:'5성', phone:'063-281-8888', address:'한옥마을로 94', parking:'O', facility:'와이파이,수영장,조식'},
+      date: "2025-06-06",
+      slots: [
+        { time: "09:00", location: "전주 한옥마을" },
+        { time: "12:00", location: "남부시장" },
+        { time: "15:00", location: "경기전" }
       ]
     },
     {
-      type:'place', name:'경기전', lat:35.8158, lng:127.1507, address:'전주시 완산구 태조로 44', parking:'X',
-      restaurants: [
-        {name:'왱이콩나물국밥', menu:'콩나물국밥', price:'9000원', phone:'063-287-6980', address:'경기전길 20', parking:'O'},
-      ],
-      hotels: [
-        {name:'스테이호텔', grade:'비즈니스', phone:'063-272-1111', address:'자만동 123-1', parking:'O', facility:'와이파이,주차'},
+      date: "2025-06-07",
+      slots: [
+        { time: "09:00", location: "전동성당" },
+        { time: "12:00", location: "오목대" },
+        { time: "15:00", location: "자만벽화마을" }
       ]
-    },
-    {
-      type:'place', name:'남부시장', lat:35.8132, lng:127.1504, address:'전주시 완산구 풍남문2길 21', parking:'O',
-      restaurants: [
-        {name:'중앙회관', menu:'비빔밥', price:'13,000원', phone:'063-232-8912', address:'전동 2-1', parking:'X'},
-      ],
-      hotels: []
     }
   ];
-  let arr = [];
-  for(let d=0; d<days; d++){
-    const date = new Date(startDate);
-    date.setDate(date.getDate()+d);
-    arr.push({
-      date: date.toISOString().slice(0,10),
-      slots: base
+  // 좌표 (하드코딩)
+  const locationCoords = {
+    "전주 한옥마을": [35.8190, 127.1480],
+    "남부시장": [35.8155, 127.1447],
+    "경기전": [35.8158, 127.1475],
+    "전동성당": [35.8152, 127.1470],
+    "오목대": [35.8150, 127.1485],
+    "자만벽화마을": [35.8168, 127.1471]
+  };
+
+  let map;
+
+  function generatePlan() {
+    showPlanSection();
+    renderPlanList(samplePlan);
+    drawMap(samplePlan);
+  }
+
+  function renderPlanList(plan) {
+    const el = document.getElementById('plan-list');
+    let html = `<table border="1" cellpadding="4"><tr>
+      <th>날짜</th><th>시간</th><th>여행지</th></tr>`;
+    plan.forEach(day => {
+      day.slots.forEach(slot => {
+        html += `<tr>
+          <td>${day.date}</td>
+          <td>${slot.time}</td>
+          <td>${slot.location}</td>
+        </tr>`;
+      });
+    });
+    html += "</table>";
+    el.innerHTML = html;
+  }
+
+  function drawMap(plan) {
+    if (!map) {
+      map = L.map('map').setView([35.8179, 127.1477], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    }
+    // 기존 마커/경로 삭제
+    if (window.lastLayers) window.lastLayers.forEach(layer => map.removeLayer(layer));
+    window.lastLayers = [];
+
+    plan.forEach((day, i) => {
+      const coords = day.slots.map(slot => locationCoords[slot.location]);
+      // 마커
+      coords.forEach((c, j) => {
+        const marker = L.marker(c).addTo(map)
+          .bindPopup(`${day.date}<br>${day.slots[j].location}`);
+        window.lastLayers.push(marker);
+      });
+      // 경로 폴리라인
+      const line = L.polyline(coords, { color: ['blue','red','green','orange'][i % 4], weight: 4 }).addTo(map);
+      window.lastLayers.push(line);
     });
   }
-  return arr;
-}
+  // 첫화면만 보이기
+  goToInput();
 </script>
 </body>
 </html>

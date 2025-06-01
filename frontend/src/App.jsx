@@ -1,4 +1,3 @@
-// src/App.jsx
 function App() {
   return (
     <div style={{ padding: 40 }}>
@@ -7,5 +6,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

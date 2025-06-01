@@ -79,6 +79,9 @@
         mapInit = true;
       }
       document.getElementById('map').style.display = 'block';
+      // **여기가 핵심! 지도 리사이즈**
+      setTimeout(() => { map.invalidateSize(); }, 100);
+
       map.eachLayer(layer => {if(layer instanceof L.Polyline||layer instanceof L.Marker) map.removeLayer(layer)});
       // 폴리라인/마커
       const colors = ["#007aff", "#e53935", "#43a047", "#fbc02d"];

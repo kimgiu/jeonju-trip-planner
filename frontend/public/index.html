@@ -5,14 +5,26 @@
   <title>나홀로 떠나는 전주여행</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <style>
-    body { background: #f4f4f4; }
-    #map { height: 400px; width: 100%; margin:2rem 0; display:none;}
-    .container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px #0001; }
-    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0;}
-    th, td { border: 1px solid #d2d2d2; padding: 0.5rem; text-align: center;}
-    th { background: #e0f6d6; }
-  </style>
+<!-- ...head, body, form/table 등 생략... -->
+<style>
+  body { background: #f4f4f4; }
+  #map {
+    height: 400px;
+    width: 100%;
+    min-width: 300px;
+    min-height: 400px;
+    margin: 2rem 0;
+    background: #eee;
+    border: 3px solid #444;
+    border-radius: 8px;
+    box-sizing: border-box;
+    display: block;
+  }
+  .container { max-width: 1100px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px #0001; }
+  /* ...기타 CSS... */
+</style>
+<!-- ...중략... -->
+
 </head>
 <body>
   <h1 style="text-align:center; color:#17a04c; margin:2rem 0 1rem 0;">나홀로 떠나는 전주여행</h1>

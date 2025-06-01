@@ -2,119 +2,96 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>전주로 떠나는 힐링여행</title>
+  <title>나홀로 떠나는 전주여행</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     body { background: #f4f4f4; }
-    #map { height: 420px; width: 100%; margin: 2rem 0; }
+    #map { height: 400px; width: 100%; margin:2rem 0; display:none;}
     .container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 16px #0001; }
-    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
-    th, td { border: 1px solid #d2d2d2; padding: 0.5rem; text-align: center; }
-    th { background: #e0f2f1; }
-    h1 { text-align: center; color: #17a04c; margin: 2rem 0 1rem 0; }
-    .legend-dot { display: inline-block; width: 1em; height: 1em; border-radius: 9999px; margin-right: 0.5em; vertical-align: middle; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0;}
+    th, td { border: 1px solid #d2d2d2; padding: 0.5rem; text-align: center;}
+    th { background: #e0f6d6; }
   </style>
 </head>
 <body>
-  <h1>전주로 떠나는 힐링여행</h1>
+  <h1 style="text-align:center; color:#17a04c; margin:2rem 0 1rem 0;">나홀로 떠나는 전주여행</h1>
   <div class="container">
-    <h2>여행 일정 (테스트 데이터)</h2>
-    <div id="plan-table"></div>
     <div>
-      <div id="map"></div>
-      <div id="legend"></div>
+      <label>여행 시작일: <input id="startDate" type="date"></label>
+      <label style="margin-left:1em;">여행 일수: <input id="days" type="number" value="2" min="1" max="7" style="width:3em"></label>
+      <button id="generateBtn" style="margin-left:1em; padding: 6px 18px; background:#19c46b; color:#fff; border-radius:5px;">여행 일정 생성하기</button>
     </div>
+    <div id="plan-table"></div>
+    <div id="map"></div>
   </div>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // 1. 샘플 여행일정 데이터 (실제론 fetch로 받아오세요!)
-    // location 값이 '좌표'로 매칭되어야 함!
-    const plan = [
-      {
-        date: "2024-06-06",
-        slots: [
-          { time: "10:00", location: "전주 한옥마을" },
-          { time: "12:00", location: "전동성당" },
-          { time: "13:00", location: "남부시장" }
-        ]
-      },
-      {
-        date: "2024-06-07",
-        slots: [
-          { time: "10:30", location: "경기전" },
-          { time: "12:30", location: "오목대" },
-          { time: "15:00", location: "전주 동물원" }
-        ]
-      }
-    ];
-
-    // 2. 전주 주요장소 → 좌표 매핑 (없으면 기본)
+    // 좌표 하드코딩
     const locationCoords = {
       "전주 한옥마을": [35.8163, 127.1530],
       "전동성당": [35.8146, 127.1472],
       "남부시장": [35.8155, 127.1447],
       "경기전": [35.8158, 127.1475],
       "오목대": [35.8167, 127.1487],
-      "전주 동물원": [35.8305, 127.1481],
-      // 추가 장소 ↓
-      "전주국립박물관": [35.8106, 127.1152],
-      "풍남문": [35.8133, 127.1494],
-      "전주역": [35.8495, 127.1621],
-      "한지박물관": [35.8030, 127.1675]
+      "자만벽화마을": [35.8144, 127.1465]
     };
-
-    // 좌표 없는 경우 대체
-    function getCoord(location) {
-      return locationCoords[location] || [35.8242, 127.1479];
+    function getCoord(name) {
+      return locationCoords[name] || [35.8242, 127.1479];
     }
 
-    // 3. 일정 표 렌더
-    function renderPlanTable(plan) {
+    // 지도
+    let map, mapInit = false;
+
+    document.getElementById('generateBtn').onclick = function() {
+      // 예시 데이터 (실제는 백엔드 결과를 여기에)
+      const plan = [
+        { date: "2025-07-01", slots: [
+          { time:"09:00", location:"전주 한옥마을" },
+          { time:"12:00", location:"남부시장" },
+          { time:"15:00", location:"경기전" }
+        ]},
+        { date: "2025-07-02", slots: [
+          { time:"09:00", location:"전동성당" },
+          { time:"12:00", location:"오목대" },
+          { time:"15:00", location:"자만벽화마을" }
+        ]}
+      ];
+      // 표
       let html = `<table><thead>
-        <tr><th>날짜</th><th>시간</th><th>여행지</th></tr>
+        <tr><th>날짜</th><th>시간</th><th>여행지</th><th>음식점</th><th>숙소(저가/중가/고가)</th></tr>
       </thead><tbody>`;
-      plan.forEach(day => {
-        day.slots.forEach((slot, idx) => {
-          html += `<tr>
-            <td>${idx === 0 ? day.date : ""}</td>
-            <td>${slot.time}</td>
-            <td>${slot.location}</td>
-          </tr>`;
-        });
-      });
+      plan.forEach(day => day.slots.forEach((slot,i) =>
+        html += `<tr>
+          <td>${i==0?day.date:""}</td>
+          <td>${slot.time}</td>
+          <td>${slot.location}</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>`
+      ));
       html += `</tbody></table>`;
       document.getElementById('plan-table').innerHTML = html;
-    }
-    renderPlanTable(plan);
-
-    // 4. 지도 초기화
-    const map = L.map('map').setView([35.8242, 127.1479], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // 5. 일정별 경로 및 마커
-    const colors = ["#1976d2", "#c62828", "#2e7d32", "#f9a825", "#6a1b9a"];
-    let legendHtml = "";
-
-    plan.forEach((day, dayIdx) => {
-      const color = colors[dayIdx % colors.length];
-      legendHtml += `<span class="legend-dot" style="background:${color}"></span>Day${dayIdx+1} &nbsp;`;
-
-      const dayCoords = day.slots.map(slot => getCoord(slot.location));
-      // 1) 경로(폴리라인)
-      L.polyline(dayCoords, { color, weight: 5, opacity: 0.75 }).addTo(map);
-      // 2) 마커 + 팝업 (시간/이름)
-      day.slots.forEach((slot, idx) => {
-        const marker = L.marker(dayCoords[idx]).addTo(map);
-        marker.bindPopup(
-          `<b>${day.date} (Day${dayIdx+1})</b><br>${slot.time} - ${slot.location}`
+      // 지도
+      if(!mapInit){
+        map = L.map('map').setView([35.8158,127.1475],14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        mapInit = true;
+      }
+      document.getElementById('map').style.display = 'block';
+      map.eachLayer(layer => {if(layer instanceof L.Polyline||layer instanceof L.Marker) map.removeLayer(layer)});
+      // 폴리라인/마커
+      const colors = ["#007aff", "#e53935", "#43a047", "#fbc02d"];
+      plan.forEach((day,idx)=>{
+        const color = colors[idx%colors.length];
+        const coords = day.slots.map(slot=>getCoord(slot.location));
+        L.polyline(coords, {color, weight:5}).addTo(map);
+        day.slots.forEach((slot,i)=>
+          L.marker(coords[i]).addTo(map)
+            .bindPopup(`<b>${day.date} (Day${idx+1})</b><br>${slot.time} - ${slot.location}`)
         );
       });
-    });
-    document.getElementById('legend').innerHTML = "<b>경로 색상:</b> " + legendHtml;
+    };
   </script>
 </body>
 </html>
